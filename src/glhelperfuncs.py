@@ -15,6 +15,10 @@ from OpenGL.GLUT import glutTimerFunc, glutSpecialFunc, glutInit, glutInitDispla
 from shaders import *
 from time import time
 
+LP_c_char = ctypes.POINTER(ctypes.c_char)
+LP_LP_c_char = ctypes.POINTER(LP_c_char)
+
+
 class ShaderManager:
     def __init__(self):
         self.uniforms = {}
@@ -37,29 +41,39 @@ class ShaderManager:
         uniformbuffer = []
         #Just testing checkerboard for now, not sure how to handle this for arbitrary shader programs
         CHECKER_CELL_SIDE_SIZE_PX = 25
-        #uniformbuffer.append(CHECKER_CELL_SIDE_SIZE_PX)
-        #uniformbuffer.append(t)
-        #glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformbuffer)
-        t1 = glGetUniformLocation(self.shaderProgram, "time")
+        uniformbuffer.append(CHECKER_CELL_SIDE_SIZE_PX)
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, bytearray(uniformbuffer))
         rsp = glGetUniformLocation(self.shaderProgram, "rowsizepixels")
         glUniform1i(rsp, CHECKER_CELL_SIDE_SIZE_PX)
 
 
     def changeShaderProgram(self, shaderprogref):
         glUseProgram(shaderprogref)
-        uniformnames = tuple(self.uniforms.keys())
-        print(uniformnames)
-        """
-        glGetUniformIndices(shaderprogref, uniformnames, self.uniformIndices)
-        glGetUniformIndices()
-        glGetActiveUniformsiv(shaderprogref, self.uniformIndices, GL_UNIFORM_OFFSET, self.uniformOffsets)
+        uniformnamelist = [s.encode("utf-8") for s in self.uniforms.keys()]
+        print(uniformnamelist)
+        p = (LP_c_char*len(uniformnamelist))()
+        uniformnames = ctypes.cast(p, LP_LP_c_char)
+        #uniformnames = (ctypes.c_char_p*len(uniformnamelist))()
+        for i, n in enumerate(uniformnamelist):
+            uniformnames[i] = ctypes.create_string_buffer(n)
+        print("Z")
         uniformblockindex = glGetUniformBlockIndex(shaderprogref, "PARAMS")
-        finalbuffersize = glGetActiveUniformsiv(shaderprogref, uniformblockindex, GL_UNIFORM_BLOCK_DATA_SIZE)
-        uniformbufferobject = glGenBuffers()
+        print("Y")
+        uniformindexarray = (ctypes.c_int * len(uniformnamelist))()
+        uniformoffsetarray = (ctypes.c_int * len(uniformnamelist))()
+        print(len(uniformnamelist))
+        glGetUniformIndices(shaderprogref, 1, uniformnames, uniformindexarray)
+        print("AFTER")
+        print([x for x in uniformindexarray])
+        glGetActiveUniformsiv(shaderprogref, len(uniformnamelist), uniformindexarray, GL_UNIFORM_OFFSET, uniformoffsetarray)
+        print("NO BUENO")
+        print([x for x in uniformoffsetarray])
+        uniformblockindex = glGetUniformBlockIndex(shaderprogref, "PARAMS")
+        #glGetActiveUniformBlockParameter(GL_UNIFORM_BLOCK_DATA_SIZE)
+        uniformbufferobject = glGenBuffers(1)
         glBindBuffer(GL_UNIFORM_BUFFER, uniformbufferobject)
         glBindBufferBase(GL_UNIFORM_BUFFER, uniformblockindex, uniformbufferobject)
-        glBufferData(GL_UNIFORM_BUFFER, finalbuffersize, GL_DYNAMIC_DRAW)
-        """
+        glBufferData(GL_UNIFORM_BUFFER, ctypes.sizeof(ctypes.c_float), (ctypes.c_float)(), GL_DYNAMIC_DRAW)
 
 
 

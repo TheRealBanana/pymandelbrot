@@ -3,7 +3,9 @@ import OpenGL.raw.GL.VERSION.GL_2_0 as GL20
 CHECKERBOARD_TEST = {}
 CHECKERBOARD_TEST["shaderstr"] = """#version 330
 
-uniform int rowsizepixels;
+layout (std140) uniform PARAMS {
+ int rowsizepixels;
+};
 
 layout(location = 0) out vec4 fragColor;
 
@@ -31,7 +33,6 @@ void main() {
 """
 CHECKERBOARD_TEST["shadertype"] = GL20.GL_FRAGMENT_SHADER
 CHECKERBOARD_TEST_UNIFORMS = {}
-CHECKERBOARD_TEST_UNIFORMS["time"] = float
 CHECKERBOARD_TEST_UNIFORMS["rowsizepixels"] = int
 CHECKERBOARD_TEST["uniforms"] = CHECKERBOARD_TEST_UNIFORMS
 
