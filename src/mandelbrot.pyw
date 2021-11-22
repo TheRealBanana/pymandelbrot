@@ -20,7 +20,9 @@ class MandelbrotView:
 
     def initview(self):
         #self.shadermanager.activateShader(CHECKERBOARD_TEST)
+        #self.shadermanager.activeShader = "CHECKERBOARD_TEST"
         self.shadermanager.activateShader(MANDELBROT_64)
+        self.shadermanager.activeShader = "MANDELBROT_64"
         self.shadermanager.updateShaderUniforms()
         pass
 

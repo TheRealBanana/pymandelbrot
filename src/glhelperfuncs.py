@@ -1,4 +1,4 @@
-import sys
+import sys, struct
 from OpenGL.GL import *
 from OpenGL.GLU import gluOrtho2D
 from OpenGL.GLUT import glutTimerFunc, glutSpecialFunc, glutInit, glutInitDisplayMode, glutPostRedisplay, glutInitWindowSize, glutInitWindowPosition, glutSwapBuffers, glutCreateWindow, glutDisplayFunc, glutMainLoop, GLUT_DOUBLE, GLUT_RGB, glutSetOption, GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION
@@ -27,6 +27,7 @@ class ShaderManager:
         self.uniformOffsets = None
         self.uniformBlockIndex = None
         self.shaderProgram = None
+        self.activeShader = None
 
     def activateShader(self, shaderdict):
         self.uniforms = shaderdict["uniforms"]
@@ -38,18 +39,21 @@ class ShaderManager:
 
 
     def updateShaderUniforms(self):
-        uniformbuffer = []
-        #initial mandelbrot testing.
-        uniformbuffer.append(1500)
-        uniformbuffer.append(1000)
-        uniformbuffer.append(0)
-        uniformbuffer.append(500)
-        uniformbuffer.append(3.0)
-        uniformbuffer.append(2.0)
-        uniformbuffer.append(-2.0)
-        uniformbuffer.append(-1.0)
-        struc = MANDELBROT_STRUCT(*uniformbuffer)
-        glBufferData(GL_UNIFORM_BUFFER, ctypes.sizeof(struc), bytearray(struc), GL_DYNAMIC_DRAW)
+        if self.activeShader == "CHECKERBOARD_TEST":
+            struc = struct.pack("i", 25)
+        else:
+            uniformbuffer = []
+            #initial mandelbrot testing.
+            uniformbuffer.append(1500)
+            uniformbuffer.append(1000)
+            uniformbuffer.append(0)
+            uniformbuffer.append(500)
+            uniformbuffer.append(3.0)
+            uniformbuffer.append(2.0)
+            uniformbuffer.append(-2.0)
+            uniformbuffer.append(-1.0)
+            struc = MANDELBROT_STRUCT(*uniformbuffer)
+        glBufferSubData(target=GL_UNIFORM_BUFFER, offset=0, size=None, data=bytearray(struc))
 
 
     def changeShaderProgram(self, shaderprogref):
@@ -67,7 +71,7 @@ class ShaderManager:
         uniformbufferobject = glGenBuffers(1)
         glBindBuffer(GL_UNIFORM_BUFFER, uniformbufferobject)
         glBindBufferBase(GL_UNIFORM_BUFFER, uniformblockindex, uniformbufferobject)
-        glBufferData(GL_UNIFORM_BUFFER, 0, bytearray(), GL_DYNAMIC_DRAW) #Initialize buffer
+        glBufferData(GL_UNIFORM_BUFFER, ctypes.sizeof(MANDELBROT_STRUCT), bytearray(), GL_DYNAMIC_DRAW) #Initialize buffer
 
 
 
