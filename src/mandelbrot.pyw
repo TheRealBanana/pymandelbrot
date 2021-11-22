@@ -8,8 +8,8 @@ from glhelperfuncs import *
 from shaders import *
 from time import time
 
-WINDOW_SIZE_WIDTH = 1024
-WINDOW_SIZE_HEIGHT = 768
+WINDOW_SIZE_WIDTH = 1500
+WINDOW_SIZE_HEIGHT = 1000
 WINDOW_TITLE = "PyMandelbrot Test"
 
 class MandelbrotView:
@@ -19,8 +19,8 @@ class MandelbrotView:
         self.initview()
 
     def initview(self):
-        self.shadermanager.activateShader(CHECKERBOARD_TEST)
-        #self.shadermanager.activateShader(MANDELBROT_64)
+        #self.shadermanager.activateShader(CHECKERBOARD_TEST)
+        self.shadermanager.activateShader(MANDELBROT_64)
         self.shadermanager.updateShaderUniforms()
         pass
 
@@ -39,12 +39,8 @@ class MandelbrotView:
         glutTimerFunc(100, self.timerfunc, 0)
 
     def redrawView(self):
+        self.shadermanager.updateShaderUniforms()
         glClear(GL11.GL_COLOR_BUFFER_BIT)
-        #self.updateShaderUniforms()
-        #if int(time()) % 2 == 0:
-        #    glColor3ub(0, 255, 255)
-        #else:
-        #    glColor3ub(255, 0, 255)
         glBegin(GL11.GL_QUADS)
         glVertex2f(0, 1)
         glVertex2f(1, 1)
@@ -52,9 +48,6 @@ class MandelbrotView:
         glVertex2f(0, 0)
         glEnd()
         glutSwapBuffers()
-        print("DAMN")
-        #GL11.glFlush()
-        #GL11.glFinish()
 
 
 
