@@ -63,10 +63,6 @@ class ShaderManager:
         uniformnames = ctypes.cast(p, LP_LP_c_char)
         for i, n in enumerate(uniformnamelist):
             uniformnames[i] = ctypes.create_string_buffer(n)
-        uniformindexarray = (ctypes.c_int * len(uniformnamelist))()
-        uniformoffsetarray = (ctypes.c_int * len(uniformnamelist))()
-        glGetUniformIndices(shaderprogref, 1, uniformnames, uniformindexarray)
-        glGetActiveUniformsiv(shaderprogref, len(uniformnamelist), uniformindexarray, GL_UNIFORM_OFFSET, uniformoffsetarray)
         uniformblockindex = glGetUniformBlockIndex(shaderprogref, "PARAMS")
         uniformbufferobject = glGenBuffers(1)
         glBindBuffer(GL_UNIFORM_BUFFER, uniformbufferobject)
