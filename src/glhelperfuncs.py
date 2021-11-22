@@ -73,7 +73,7 @@ class ShaderManager:
         uniformbufferobject = glGenBuffers(1)
         glBindBuffer(GL_UNIFORM_BUFFER, uniformbufferobject)
         glBindBufferBase(GL_UNIFORM_BUFFER, uniformblockindex, uniformbufferobject)
-        glBufferData(GL_UNIFORM_BUFFER, ctypes.sizeof(ctypes.c_float), (ctypes.c_float)(), GL_DYNAMIC_DRAW)
+        glBufferData(GL_UNIFORM_BUFFER, ctypes.sizeof(ctypes.c_float), bytearray(), GL_DYNAMIC_DRAW)
 
 
 
