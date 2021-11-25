@@ -31,6 +31,7 @@ class ShaderManager:
 
     def activateShader(self, shaderdict):
         self.uniforms = shaderdict["uniforms"]
+        self.activeShader = shaderdict["name"]
         shader = createShaderFromString(shaderdict["shaderstr"], shaderdict["shadertype"])
         self.shaderProgram = glCreateProgram()
         glAttachShader(self.shaderProgram, shader)
@@ -38,20 +39,22 @@ class ShaderManager:
         self.changeShaderProgram(self.shaderProgram)
 
 
-    def updateShaderUniforms(self):
+    def updateShaderUniforms(self, uniformdata={}):
+        if uniformdata is None:
+            raise(Exception("WAT"))
         if self.activeShader == "CHECKERBOARD_TEST":
             struc = struct.pack("i", 25)
         else:
             uniformbuffer = []
             #initial mandelbrot testing.
-            uniformbuffer.append(1500)
-            uniformbuffer.append(1000)
-            uniformbuffer.append(0)
-            uniformbuffer.append(500)
-            uniformbuffer.append(3.0)
-            uniformbuffer.append(2.0)
-            uniformbuffer.append(-2.0)
-            uniformbuffer.append(-1.0)
+            uniformbuffer.append(uniformdata["WINDOW_SIZE_WIDTH"])
+            uniformbuffer.append(uniformdata["WINDOW_SIZE_HEIGHT"])
+            uniformbuffer.append(uniformdata["CURRENT_COLOR_MODE"])
+            uniformbuffer.append(uniformdata["ESCAPE_VELOCITY_TEST_ITERATIONS"])
+            uniformbuffer.append(uniformdata["ORTHO_WIDTH"])
+            uniformbuffer.append(uniformdata["ORTHO_HEIGHT"])
+            uniformbuffer.append(uniformdata["BOUND_LEFT"])
+            uniformbuffer.append(uniformdata["BOUND_BOTTOM"])
             struc = MANDELBROT_STRUCT(*uniformbuffer)
         glBufferSubData(target=GL_UNIFORM_BUFFER, offset=0, size=None, data=bytearray(struc))
 
@@ -88,14 +91,12 @@ def glinit(windowSizeW, windowSizeH, windowTitle):
     glutInitWindowSize(windowSizeW, windowSizeH)
     glutInitWindowPosition(50,50)
     glutCreateWindow(windowTitle)
-    gluOrtho2D(0.0, 1.0, 0.0, 1.0) #left, right, bottom, top
     glClearColor(255, 255, 255, 255) #Clear black
     glViewport(0, 0, windowSizeW, windowSizeH)
-    #glMatrixMode(GL_PROJECTION)
-    glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0)
 
 
 def resetDisplay():
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glLoadIdentity()
-    #glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0)

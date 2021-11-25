@@ -31,6 +31,7 @@ void main() {
     }
 }
 """
+CHECKERBOARD_TEST["name"] = "CHECKERBOARD_TEST"
 CHECKERBOARD_TEST["shadertype"] = GL20.GL_FRAGMENT_SHADER
 CHECKERBOARD_TEST_UNIFORMS = {}
 CHECKERBOARD_TEST_UNIFORMS["rowsizepixels"] = int
@@ -114,6 +115,7 @@ void main() {
 	fragColor = getColorFromVelocity(normalizedVelocity);
 }
 """
+MANDELBROT_64["name"] = "MANDELBROT_64"
 MANDELBROT_64["shadertype"] = GL20.GL_FRAGMENT_SHADER
 MANDELBROT_64_UNIFORMS = {}
 MANDELBROT_64_UNIFORMS["WINDOW_SIZE_WIDTH"] = int
