@@ -52,7 +52,7 @@ class ShaderManager:
             uniformbuffer.append(uniformdata["BOUND_LEFT"])
             uniformbuffer.append(uniformdata["BOUND_BOTTOM"])
             struc = MANDELBROT_STRUCT(*uniformbuffer)
-        glBufferSubData(target=GL_UNIFORM_BUFFER, offset=0, size=None, data=bytearray(struc))
+        glBufferSubData(target=GL_UNIFORM_BUFFER, offset=0, size=None, data=bytes(struc))
 
 
     def changeShaderProgram(self, shaderprogref):
