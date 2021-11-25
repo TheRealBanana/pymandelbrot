@@ -1,7 +1,6 @@
-import sys, struct
+import struct
 from OpenGL.GL import *
-from OpenGL.GLU import gluOrtho2D
-from OpenGL.GLUT import glutTimerFunc, glutSpecialFunc, glutInit, glutInitDisplayMode, glutPostRedisplay, glutInitWindowSize, glutInitWindowPosition, glutSwapBuffers, glutCreateWindow, glutDisplayFunc, glutMainLoop, GLUT_DOUBLE, GLUT_RGB, glutSetOption, GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION
+from OpenGL.GLUT import *
 from shaders import *
 
 LP_c_char = ctypes.POINTER(ctypes.c_char)
@@ -23,9 +22,6 @@ class MANDELBROT_STRUCT(ctypes.Structure):
 class ShaderManager:
     def __init__(self):
         self.uniforms = {}
-        self.uniformIndices = []
-        self.uniformOffsets = None
-        self.uniformBlockIndex = None
         self.shaderProgram = None
         self.activeShader = None
 

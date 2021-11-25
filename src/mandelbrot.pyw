@@ -1,9 +1,6 @@
-from OpenGL.GL import glColor3ub, glVertex2f, glBegin, glEnd, glClearColor, GL_QUADS, glClear, GL_COLOR_BUFFER_BIT
-from OpenGL.GLU import gluOrtho2D
-from OpenGL.GLUT import *
-from OpenGL.WGL.EXT import swap_control
 from glhelperfuncs import *
 from shaders import *
+from OpenGL.GLUT import *
 from time import time
 from functools import partial
 
@@ -15,12 +12,6 @@ PERFORMANCE_TESTING = False
 ZOOM_INCREMENT = 0.3
 PAN_PCT_INCREMENT = 0.25
 ITERATION_INCREMENT = 20
-
-
-
-
-
-from collections import namedtuple
 
 class ComplexNumber:
     def __init__(self, real, imag):
@@ -130,7 +121,6 @@ class MandelbrotView:
         imag = ((windowcoords.y/WINDOW_SIZE_HEIGHT) * self.getComplexHeight()) + self.BOUNDS["BOTTOM"]
         return real, imag
 
-
     def resetAll(self):
         print("View reset")
         self.ASPECT_RATIO = 3.0/2.0
@@ -146,13 +136,6 @@ class MandelbrotView:
         resetDisplay()
         self.updateView()
 
-    def timerfunc(self, _):
-        self.updateShaderUniforms()
-        self.redrawView()
-        glutPostRedisplay()
-        #Technically we dont need to do this, we only need to redraw the view after a control input
-        glutTimerFunc(100, self.timerfunc, 0)
-
     def updateShaderUniforms(self):
         self.shadermanager.updateShaderUniforms(self.generateShaderUniformData())
 
@@ -167,8 +150,6 @@ class MandelbrotView:
         uniformdata["BOUND_LEFT"] = self.BOUNDS["LEFT"]
         uniformdata["BOUND_BOTTOM"] = self.BOUNDS["BOTTOM"]
         return uniformdata
-
-
 
     def redrawView(self):
         self.updateShaderUniforms()
@@ -187,7 +168,6 @@ def main():
     glinit(WINDOW_SIZE_WIDTH, WINDOW_SIZE_HEIGHT, WINDOW_TITLE)
     viewcontrol = MandelbrotView()
     viewcontrol.redrawView()
-
     press = partial(viewcontrol.specialToggle, "PRESS")
     release = partial(viewcontrol.specialToggle, "RELEASE")
     glutIgnoreKeyRepeat(False)
