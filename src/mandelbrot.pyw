@@ -26,7 +26,7 @@ class WindowCoordinates:
 class MandelbrotView:
     def __init__(self):
         self.lasttime = time()
-        self.shadermanager = ShaderManager()
+        self.shadermanager = ShaderManager(WINDOW_SIZE_HEIGHT, WINDOW_SIZE_WIDTH)
         self.ASPECT_RATIO = 3.0/2.0 #Will change for bifurcation mode
         self.currentColorMode = 0
         self.currentZoomLevel = 1.0
@@ -161,6 +161,7 @@ class MandelbrotView:
         glVertex2f(0, 0)
         glEnd()
         glutSwapBuffers()
+        self.shadermanager.printtexdata()
 
 def LOCK_SIZE_FUNC(*_, **__): glutReshapeWindow(WINDOW_SIZE_WIDTH, WINDOW_SIZE_HEIGHT)
 

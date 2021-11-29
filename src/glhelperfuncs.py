@@ -1,7 +1,9 @@
+import ctypes
 import struct
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from shaders import *
+import numpy
 
 LP_c_char = ctypes.POINTER(ctypes.c_char)
 LP_LP_c_char = ctypes.POINTER(LP_c_char)
@@ -19,11 +21,53 @@ class MANDELBROT_STRUCT(ctypes.Structure):
         ('BOUND_BOTTOM', ctypes.c_double)
     )
 
+class TextureManager:
+    def __init__(self, sizex, sizey):
+        self.sizex = sizex
+        self.sizey = sizey
+        self.textureobject = GLint()
+        self.initTexture()
+
+
+    #For now we are only using this to create the Buddhabrot and for that we just need to
+    #track the number of times a point is traveled through by the iterating function.
+    #So we don't need RGBA, just single channel.
+    def initTexture(self):
+        glCreateTextures(GL_TEXTURE_2D, 1, self.textureobject)
+        glTextureStorage2D(self.textureobject.value, 1, GL_RGBA32F, self.sizex, self.sizey)
+        glBindTexture(GL_TEXTURE_2D, self.textureobject.value)
+        #Set up some texture parameters. We don't want the texture to wrap
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        #Also make sure any texture filtering done is linear
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        #Zero out the texture in the GPUs memory
+        glClearTexSubImage(self.textureobject.value, 0, 0, 0, 0, self.sizex, self.sizey, 1, GL_RGBA, GL_FLOAT, (ctypes.c_float * 4)(0.0))
+        #glTexImage2D(GL_TEXTURE_2D, 0, GL_R, self.sizex, self.sizey, 0, GL_RED, GL_UNSIGNED_INT, 0)
+        #Make the texture readable and writable
+        glBindImageTexture(0, self.textureobject.value, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F)
+
+    def getTexData(self):
+        #Make sure any writing operations have finished
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
+        #allocate memory for the return data.
+        arraysize = self.sizex * self.sizey * 4 # X size, Y size, num channels
+        data = (ctypes.c_float * arraysize)(0.0) # Init to all 0.0
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, ctypes.addressof(data))
+        print(len([x for x in data if x != 0.0]))
+        #print([x for x in data if x != 0.0])
+
+
 class ShaderManager:
-    def __init__(self):
+    def __init__(self, sizex, sizey):
+        self.texman = TextureManager(sizex, sizey)
         self.uniforms = {}
         self.shaderProgram = None
         self.activeShader = None
+
+    def printtexdata(self):
+        print(self.texman.getTexData())
 
     def activateShader(self, shaderdict):
         self.uniforms = shaderdict["uniforms"]

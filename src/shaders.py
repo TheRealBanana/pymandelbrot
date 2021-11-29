@@ -59,6 +59,9 @@ layout (std140) uniform PARAMS {
 
 layout(location = 0) out vec4 fragColor;
 
+
+layout (binding = 0, rgba32f) uniform image2D image_in;
+
 //Borrowed from http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
 vec3 hsv2rgb(vec3 c)
 {
@@ -89,6 +92,18 @@ float findEscapeVelocity(dvec2 c) {
         iter++;
         zRealSquared = z.x*z.x;
         zImagSquared = z.y*z.y;
+        //Buddhabrot stuff. Track the number of times a point is traveled through by this iterating function
+        //Then later we can map the intensity of the pixel to this number
+        //Even if we only had a single channel, we always use vec4 to get the data.
+        //Unused channels will just be 0 and can be ignored.
+        vec4 olddata = imageLoad(image_in, ivec2(gl_FragCoord.xy));
+        
+        olddata.x += 1;
+        imageStore(image_in, ivec2(gl_FragCoord.xy), olddata);
+        memoryBarrierImage();
+        memoryBarrier();
+        
+        
     }
     if (zRealSquared + zImagSquared >= 4.0) {
         return float(iter)/float(ESCAPE_VELOCITY_TEST_ITERATIONS);
