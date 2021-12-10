@@ -75,6 +75,13 @@ vec3 hsv2rgb(vec3 c)
 float map(float value, float valmin, float valmax, float targetmin, float targetmax) {
   return targetmin + (value - valmin) * (targetmax - targetmin) / (valmax - valmin);
 }
+
+ivec2 getWindowCoordsFromOrthoCoords(dvec2 ortho) {
+    int winX = int((double(WINDOW_SIZE_WIDTH) * (BOUND_LEFT - ortho.x))/(BOUND_LEFT - ORTHO_WIDTH));
+    int winY = int((double(WINDOW_SIZE_HEIGHT) * (BOUND_BOTTOM - ortho.y))/(BOUND_BOTTOM - ORTHO_HEIGHT));
+    return ivec2(winX, winY);
+}
+
 float findEscapeVelocity(dvec2 c) {
     dvec2 z = dvec2(0.0, 0.0);
     int iter = 1;
@@ -96,13 +103,12 @@ float findEscapeVelocity(dvec2 c) {
         //Then later we can map the intensity of the pixel to this number
         //Even if we only had a single channel, we always use vec4 to get the data.
         //Unused channels will just be 0 and can be ignored.
-        vec4 olddata = imageLoad(image_in, ivec2(gl_FragCoord.xy));
-        
+        ivec2 passingcoord = getWindowCoordsFromOrthoCoords(z);
+        vec4 olddata = imageLoad(image_in, passingcoord);
         olddata.x += 1;
-        imageStore(image_in, ivec2(gl_FragCoord.xy), olddata);
+        imageStore(image_in, passingcoord, olddata);
         memoryBarrierImage();
         memoryBarrier();
-        
         
     }
     if (zRealSquared + zImagSquared >= 4.0) {
@@ -116,6 +122,7 @@ dvec2 getOrthoCoordsFromWindowCoords(double x, double y) {
     return dvec2(orthoX, orthoY);
     //return dvec2(0.0, 0.0);
 }
+
 vec4 getColorFromVelocity(float v) {
     if (v == 0.0) return vec4(0.0,0.0,0.0,1.0);
     vec4 retcolor = vec4(v,0.0,0.0,1.0);

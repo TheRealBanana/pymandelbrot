@@ -4,7 +4,7 @@ from OpenGL.GLUT import *
 from time import time
 from functools import partial
 
-WINDOW_SIZE_HEIGHT = 1000
+WINDOW_SIZE_HEIGHT = 500
 WINDOW_SIZE_WIDTH = int(WINDOW_SIZE_HEIGHT/(2.0/3.0))
 WINDOW_TITLE = "PyMandelbrot Test"
 
@@ -26,7 +26,7 @@ class WindowCoordinates:
 class MandelbrotView:
     def __init__(self):
         self.lasttime = time()
-        self.shadermanager = ShaderManager(WINDOW_SIZE_HEIGHT, WINDOW_SIZE_WIDTH)
+        self.shadermanager = ShaderManager(WINDOW_SIZE_WIDTH, WINDOW_SIZE_HEIGHT)
         self.ASPECT_RATIO = 3.0/2.0 #Will change for bifurcation mode
         self.currentColorMode = 0
         self.currentZoomLevel = 1.0
@@ -153,6 +153,9 @@ class MandelbrotView:
 
     def redrawView(self):
         self.updateShaderUniforms()
+        #By not clearing texture data we can aggregate data over multiple frames
+        #Not sure how this would look but it sounds interesting. For now it needs to be cleared.
+        self.shadermanager.texman.clearTexData()
         glClear(GL_COLOR_BUFFER_BIT)
         glBegin(GL_QUADS)
         glVertex2f(0, 1)

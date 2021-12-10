@@ -3,7 +3,8 @@ import struct
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from shaders import *
-import numpy
+#TODO DELETEME
+from PIL import Image
 
 LP_c_char = ctypes.POINTER(ctypes.c_char)
 LP_LP_c_char = ctypes.POINTER(LP_c_char)
@@ -28,7 +29,6 @@ class TextureManager:
         self.textureobject = GLint()
         self.initTexture()
 
-
     #For now we are only using this to create the Buddhabrot and for that we just need to
     #track the number of times a point is traveled through by the iterating function.
     #So we don't need RGBA, just single channel.
@@ -43,8 +43,7 @@ class TextureManager:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         #Zero out the texture in the GPUs memory
-        glClearTexSubImage(self.textureobject.value, 0, 0, 0, 0, self.sizex, self.sizey, 1, GL_RGBA, GL_FLOAT, (ctypes.c_float * 4)(0.0))
-        #glTexImage2D(GL_TEXTURE_2D, 0, GL_R, self.sizex, self.sizey, 0, GL_RED, GL_UNSIGNED_INT, 0)
+        self.clearTexData()
         #Make the texture readable and writable
         glBindImageTexture(0, self.textureobject.value, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F)
 
@@ -52,11 +51,41 @@ class TextureManager:
         #Make sure any writing operations have finished
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT)
         #allocate memory for the return data.
-        arraysize = self.sizex * self.sizey * 4 # X size, Y size, num channels
-        data = (ctypes.c_float * arraysize)(0.0) # Init to all 0.0
+        #Texels are vec4
+        vec4 = (ctypes.c_float * 4) # 4 channels
+        #Our sizex*sizey sized array of vec4's to read the texture data into
+        data = ((vec4 * self.sizex) * self.sizey)()
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, ctypes.addressof(data))
-        print(len([x for x in data if x != 0.0]))
-        #print([x for x in data if x != 0.0])
+        #Fix up our texture data into python types.
+        #Easiest form I can think of is to have a dict where each key is the pixel value in a tuple (x,y)
+        finaltexdata = {}
+        m=1
+        for y in range(len(data)):
+            for x in range(len(data[0])):
+                finaltexdata[(x,y)] = tuple([int(v) for v in data[y][x]]) # FOR RGBA data
+                #finaltexdata[(x,y)] = int(data[y][x][0]) # For monochromatic data
+                if max(finaltexdata[(x,y)]) > m: m = max(finaltexdata[(x,y)])
+                #if finaltexdata[(x,y)] > m: m = finaltexdata[(x,y)]
+        print("Max value in buddhabrot data: %s" % m)
+        #Normalize the data to 0-255 based on the largest value
+        for pixel, vals in finaltexdata.items():
+            finaltexdata[pixel] = tuple([int((v/m)*360) for v in vals])
+            #finaltexdata[pixel] = int((vals/m)*255)
+
+        #Write out to a file
+        img = Image.new("RGBA", (self.sizex, self.sizey))
+        #img = Image.new("L", (self.sizex, self.sizey)) # monochromatic
+        for pixel, val in finaltexdata.items():
+            pixel = (pixel[0], self.sizey-pixel[1]-1) # Correct flipped y axis
+            color = hsvToRGB(val[0], 1, 1) + (255,) # hsv ramp + 255 alpha channel
+            img.putpixel(pixel, color)
+
+        img.save("./lolwut.png")
+        #TODO DELETE ALL THIS CODE!
+        raise(Exception("IMAGE WRITTEN - ENDING TEST"))
+
+    def clearTexData(self):
+        glClearTexSubImage(self.textureobject.value, 0, 0, 0, 0, self.sizex, self.sizey, 1, GL_RGBA, GL_FLOAT, (ctypes.c_float * 4)(0.0))
 
 
 class ShaderManager:
@@ -67,7 +96,7 @@ class ShaderManager:
         self.activeShader = None
 
     def printtexdata(self):
-        print(self.texman.getTexData())
+        self.texman.getTexData()
 
     def activateShader(self, shaderdict):
         self.uniforms = shaderdict["uniforms"]
@@ -140,3 +169,17 @@ def resetDisplay():
     glClearColor(1.0, 1.0, 1.0, 1.0)
     glLoadIdentity()
     glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0)
+
+
+def hsvToRGB(h, s, v):
+    h = min(max(0, h), 360)
+    s = min(max(0, s), 1)
+    v = min(max(0, v), 1)
+    def f(n):
+        k = (n + (h/60.0)) % 6.0
+        maxval = max(0, min(k, 4-k, 1))
+        return v - (v*s*maxval)
+    r = f(5)
+    g = f(3)
+    b = f(1)
+    return int(r*255), int(g*255), int(b*255)
