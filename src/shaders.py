@@ -1,4 +1,5 @@
 import OpenGL.raw.GL.VERSION.GL_2_0 as GL20
+import OpenGL.raw.GL.VERSION.GL_4_3
 
 CHECKERBOARD_TEST = {}
 CHECKERBOARD_TEST["shaderstr"] = """#version 330
@@ -40,8 +41,10 @@ CHECKERBOARD_TEST["uniforms"] = CHECKERBOARD_TEST_UNIFORMS
 
 MANDELBROT_64 = {}
 MANDELBROT_64["shaderstr"] = """
-#version 440
+#version 450
 #extension GL_ARB_gpu_shader_fp64 : require
+#extension GL_ARB_arrays_of_arrays : require
+#extension GL_NV_shader_buffer_load : require
 
 //Didnt need to specify the offsets or alignment explicitly here since
 //the values I chose are the automatic values anyway, but its easier
@@ -58,9 +61,10 @@ layout (std140) uniform PARAMS {
 };
 
 layout(location = 0) out vec4 fragColor;
-
-
 layout (binding = 0, rgba32f) uniform image2D image_in;
+const int a = WINDOW_SIZE_WIDTH;
+const int b = WINDOW_SIZE_HEIGHT;
+const int asize = a*b;
 
 //Borrowed from http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
 vec3 hsv2rgb(vec3 c)
@@ -82,7 +86,7 @@ ivec2 getWindowCoordsFromOrthoCoords(dvec2 ortho) {
     return ivec2(winX, winY);
 }
 
-float findEscapeVelocity(dvec2 c) {
+void populatetexture(dvec2 c) {
     dvec2 z = dvec2(0.0, 0.0);
     int iter = 1;
     double zRealSquared = 0.0;
@@ -107,11 +111,30 @@ float findEscapeVelocity(dvec2 c) {
         vec4 olddata = imageLoad(image_in, passingcoord);
         olddata.x += 1;
         imageStore(image_in, passingcoord, olddata);
-        memoryBarrierImage();
-        memoryBarrier();
-        
+    } 
+}
+
+float findEscapeVelocity(dvec2 c) {
+    dvec2 z = dvec2(0.0, 0.0);
+    int iter = 1;
+    double zRealSquared = 0.0;
+    double zImagSquared = 0.0;
+    
+    while (zRealSquared + zImagSquared < 4.0 && iter < ESCAPE_VELOCITY_TEST_ITERATIONS) {
+        //Moved out of functions to increase speed... but it didnt.
+        //I think this means the GLSL compiler was pretty smart and made these optimizations for us.
+        //Z^2
+        z.y = (z.x * z.y) + (z.y * z.x);
+        z.x = (zRealSquared) - zImagSquared;
+        //+c
+        //Adding complex numbers is the same as adding two vectors.
+        z = z + c;
+        iter++;
+        zRealSquared = z.x*z.x;
+        zImagSquared = z.y*z.y;
     }
     if (zRealSquared + zImagSquared >= 4.0) {
+        populatetexture(c);
         return float(iter)/float(ESCAPE_VELOCITY_TEST_ITERATIONS);
     }
     return 0.0;
@@ -120,7 +143,6 @@ dvec2 getOrthoCoordsFromWindowCoords(double x, double y) {
     double orthoX = fma(x/double(WINDOW_SIZE_WIDTH), ORTHO_WIDTH, BOUND_LEFT);
     double orthoY = fma(y/double(WINDOW_SIZE_HEIGHT), ORTHO_HEIGHT, BOUND_BOTTOM);
     return dvec2(orthoX, orthoY);
-    //return dvec2(0.0, 0.0);
 }
 
 vec4 getColorFromVelocity(float v) {
@@ -149,3 +171,36 @@ MANDELBROT_64_UNIFORMS["ORTHO_HEIGHT"] = float
 MANDELBROT_64_UNIFORMS["BOUND_LEFT"] = float
 MANDELBROT_64_UNIFORMS["BOUND_BOTTOM"] = float
 MANDELBROT_64["uniforms"] = MANDELBROT_64_UNIFORMS
+
+FRACTAL_COMPUTE_SHADER = {}
+FRACTAL_COMPUTE_SHADER["shaderstr"] = """
+#version 450
+#extension GL_ARB_gpu_shader_fp64 : require
+#extension GL_ARB_arrays_of_arrays : require
+#extension GL_NV_shader_buffer_load : require
+
+//Didnt need to specify the offsets or alignment explicitly here since
+//the values I chose are the automatic values anyway, but its easier
+//to see where I got the values for the fp32 shader.
+//layout(local_size_x = 1, local_size_y = 1) in;
+
+layout (std140) uniform PARAMS {
+    int WINDOW_SIZE_WIDTH;
+    int WINDOW_SIZE_HEIGHT;
+    int CURRENT_COLOR_MODE;
+    int ESCAPE_VELOCITY_TEST_ITERATIONS;
+    double ORTHO_WIDTH;
+    double ORTHO_HEIGHT;
+    double BOUND_LEFT;
+    double BOUND_BOTTOM;
+};
+
+void main() {
+	//fragColor = vec4(1.0,0.0,0.0,1.0);
+}
+
+
+"""
+FRACTAL_COMPUTE_SHADER["uniforms"] = MANDELBROT_64_UNIFORMS
+FRACTAL_COMPUTE_SHADER["name"] = "FRACTAL_COMPUTE_SHADER"
+FRACTAL_COMPUTE_SHADER["shadertype"] = OpenGL.raw.GL.VERSION.GL_4_3.GL_COMPUTE_SHADER

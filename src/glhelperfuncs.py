@@ -73,12 +73,13 @@ class TextureManager:
             #finaltexdata[pixel] = int((vals/m)*255)
 
         #Write out to a file
-        img = Image.new("RGBA", (self.sizex, self.sizey))
-        #img = Image.new("L", (self.sizex, self.sizey)) # monochromatic
+        #img = Image.new("RGBA", (self.sizex, self.sizey))
+        img = Image.new("L", (self.sizex, self.sizey)) # monochromatic
         for pixel, val in finaltexdata.items():
             pixel = (pixel[0], self.sizey-pixel[1]-1) # Correct flipped y axis
-            color = hsvToRGB(val[0], 1, 1) + (255,) # hsv ramp + 255 alpha channel
-            img.putpixel(pixel, color)
+            #color = hsvToRGB(val[0], 1, 1) + (255,) # hsv ramp + 255 alpha channel
+            #img.putpixel(pixel, color)
+            img.putpixel(pixel, val[0])
 
         img.save("./lolwut.png")
         #TODO DELETE ALL THIS CODE!
@@ -127,9 +128,16 @@ class ShaderManager:
             struc = MANDELBROT_STRUCT(*uniformbuffer)
         glBufferSubData(target=GL_UNIFORM_BUFFER, offset=0, size=None, data=bytes(struc))
 
-
     def changeShaderProgram(self, shaderprogref):
-        glUseProgram(shaderprogref)
+        try:
+            glUseProgram(shaderprogref)
+        except Exception as e:
+            print("ERROR")
+            print(glGetError())
+            print("------")
+            print(glGetProgramInfoLog(self.shaderProgram).decode("utf8"))
+            print("========================")
+            raise(e)
         uniformnamelist = [s.encode("utf-8") for s in self.uniforms.keys()]
         p = (LP_c_char*len(uniformnamelist))()
         uniformnames = ctypes.cast(p, LP_LP_c_char)
@@ -151,7 +159,6 @@ def createShaderFromString(shaderstr, shadertype):
         compileerror = glGetShaderInfoLog(shaderhandle)
         print(compileerror)
         raise(Exception("Shader compilation error:\n%s" % compileerror))
-
     return shaderhandle
 
 def glinit(windowSizeW, windowSizeH, windowTitle):
