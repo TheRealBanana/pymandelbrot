@@ -134,7 +134,7 @@ float findEscapeVelocity(dvec2 c) {
         zImagSquared = z.y*z.y;
     }
     if (zRealSquared + zImagSquared >= 4.0) {
-        populatetexture(c);
+        // populatetexture(c);
         return float(iter)/float(ESCAPE_VELOCITY_TEST_ITERATIONS);
     }
     return 0.0;

@@ -4,7 +4,7 @@ from OpenGL.GLUT import *
 from time import time
 from functools import partial
 
-WINDOW_SIZE_HEIGHT = 500
+WINDOW_SIZE_HEIGHT = 1100
 WINDOW_SIZE_WIDTH = int(WINDOW_SIZE_HEIGHT/(2.0/3.0))
 WINDOW_TITLE = "PyMandelbrot Test"
 
@@ -48,9 +48,9 @@ class MandelbrotView:
         sv = {"PRESS": True, "RELEASE": False}
         if keycode == 112: #shift
             self.specialKeys["SHIFT"] = sv[state]
-        elif keycode == 114: #shift
+        elif keycode == 114: #control
             self.specialKeys["CTL"] = sv[state]
-        elif keycode == 116: #shift
+        elif keycode == 116: #alt
             self.specialKeys["ALT"] = sv[state]
         elif state == "PRESS" and keycode in [GLUT_KEY_UP, GLUT_KEY_DOWN, GLUT_KEY_LEFT, GLUT_KEY_RIGHT, GLUT_KEY_INSERT]: # Passthrough certain special keys
             self.keypress_callback_GLUT(keycode, _, __)
@@ -87,11 +87,18 @@ class MandelbrotView:
             if keycode == b"{":
                 self.maxTestIterations -= ITERATION_INCREMENT*10
             self.maxTestIterations -= ITERATION_INCREMENT
-            if self.maxTestIterations < 0: self.maxTestIterations = 0
+            if self.maxTestIterations < 0: self.maxTestIterations = 1
         elif keycode in b"}]":
             if keycode == b"}":
                 self.maxTestIterations += ITERATION_INCREMENT*10
             self.maxTestIterations += ITERATION_INCREMENT
+        #small changes to iteration count using 4 percent to scale the rate of change evenly
+        #with a reasonably fast video card you can see an iteration zoom in realtime by just holding ctrl+]
+        elif keycode == b'\x1b': #CTRL+[
+            self.maxTestIterations -= max(int(self.maxTestIterations*0.04), 1) #minimum change of 1
+            if self.maxTestIterations < 1: self.maxTestIterations = 1 #Don't go lower than 1
+        elif keycode == b'\x1d': #CTRL+]
+            self.maxTestIterations += max(int(self.maxTestIterations*0.04), 1) #minimum change of 1
         elif keycode == GLUT_KEY_INSERT: # Shift + 0 keypad
             self.resetAll()
         else:
@@ -140,15 +147,16 @@ class MandelbrotView:
         self.shadermanager.updateShaderUniforms(self.generateShaderUniformData())
 
     def generateShaderUniformData(self):
-        uniformdata = {}
-        uniformdata["WINDOW_SIZE_WIDTH"] = WINDOW_SIZE_WIDTH
-        uniformdata["WINDOW_SIZE_HEIGHT"] = WINDOW_SIZE_HEIGHT
-        uniformdata["CURRENT_COLOR_MODE"] = self.currentColorMode
-        uniformdata["ESCAPE_VELOCITY_TEST_ITERATIONS"] = self.maxTestIterations
-        uniformdata["ORTHO_WIDTH"] = self.getComplexWidth()
-        uniformdata["ORTHO_HEIGHT"] = self.getComplexHeight()
-        uniformdata["BOUND_LEFT"] = self.BOUNDS["LEFT"]
-        uniformdata["BOUND_BOTTOM"] = self.BOUNDS["BOTTOM"]
+        uniformdata = {
+            "WINDOW_SIZE_WIDTH": WINDOW_SIZE_WIDTH,
+            "WINDOW_SIZE_HEIGHT": WINDOW_SIZE_HEIGHT,
+            "CURRENT_COLOR_MODE": self.currentColorMode,
+            "ESCAPE_VELOCITY_TEST_ITERATIONS": self.maxTestIterations,
+            "ORTHO_WIDTH": self.getComplexWidth(),
+            "ORTHO_HEIGHT": self.getComplexHeight(),
+            "BOUND_LEFT": self.BOUNDS["LEFT"],
+            "BOUND_BOTTOM": self.BOUNDS["BOTTOM"]
+        }
         return uniformdata
 
     def redrawView(self):
@@ -164,7 +172,7 @@ class MandelbrotView:
         glVertex2f(0, 0)
         glEnd()
         glutSwapBuffers()
-        self.shadermanager.printtexdata()
+        #self.shadermanager.printtexdata()
 
 def LOCK_SIZE_FUNC(*_, **__): glutReshapeWindow(WINDOW_SIZE_WIDTH, WINDOW_SIZE_HEIGHT)
 

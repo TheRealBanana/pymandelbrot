@@ -1,4 +1,3 @@
-import ctypes
 import struct
 from OpenGL.GL import *
 from OpenGL.GLUT import *
@@ -62,15 +61,15 @@ class TextureManager:
         m=1
         for y in range(len(data)):
             for x in range(len(data[0])):
-                finaltexdata[(x,y)] = tuple([int(v) for v in data[y][x]]) # FOR RGBA data
-                #finaltexdata[(x,y)] = int(data[y][x][0]) # For monochromatic data
-                if max(finaltexdata[(x,y)]) > m: m = max(finaltexdata[(x,y)])
-                #if finaltexdata[(x,y)] > m: m = finaltexdata[(x,y)]
+                #finaltexdata[(x,y)] = tuple([int(v) for v in data[y][x]]) # FOR RGBA data
+                finaltexdata[(x,y)] = int(data[y][x][0]) # For monochromatic data
+                #if max(finaltexdata[(x,y)]) > m: m = max(finaltexdata[(x,y)])
+                if finaltexdata[(x,y)] > m: m = finaltexdata[(x,y)]
         print("Max value in buddhabrot data: %s" % m)
         #Normalize the data to 0-255 based on the largest value
         for pixel, vals in finaltexdata.items():
-            finaltexdata[pixel] = tuple([int((v/m)*360) for v in vals])
-            #finaltexdata[pixel] = int((vals/m)*255)
+            #finaltexdata[pixel] = tuple([int((v/m)*255) for v in vals])
+            finaltexdata[pixel] = int((vals/m)*255)
 
         #Write out to a file
         #img = Image.new("RGBA", (self.sizex, self.sizey))
@@ -79,7 +78,7 @@ class TextureManager:
             pixel = (pixel[0], self.sizey-pixel[1]-1) # Correct flipped y axis
             #color = hsvToRGB(val[0], 1, 1) + (255,) # hsv ramp + 255 alpha channel
             #img.putpixel(pixel, color)
-            img.putpixel(pixel, val[0])
+            img.putpixel(pixel, val)
 
         img.save("./lolwut.png")
         #TODO DELETE ALL THIS CODE!
@@ -97,6 +96,7 @@ class ShaderManager:
         self.activeShader = None
 
     def printtexdata(self):
+        print("GENERATING BUDDHABROT AND THEN EXITING.")
         self.texman.getTexData()
 
     def activateShader(self, shaderdict):
